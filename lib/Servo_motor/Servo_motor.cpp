@@ -1,6 +1,6 @@
 #include "Servo_motor.hpp"
 
-Servo_motor::Servo_motor(const char *uuid, const uint8_t pin, const uint16_t poll_rate,
+Servo_motor::Servo_motor(const std::string uuid, const uint8_t pin, const uint16_t poll_rate,
                          const uint8_t leftmost_position_degree,
                          const uint8_t rightmost_position_degree)
     : uuid(uuid), pin(pin), poll_rate(poll_rate), leftmost_pos_deg(leftmost_position_degree),
@@ -9,7 +9,7 @@ Servo_motor::Servo_motor(const char *uuid, const uint8_t pin, const uint16_t pol
   this->servo.attach(pin);
 }
 
-const char *Servo_motor::get_uuid() {
+const std::string Servo_motor::get_uuid() {
   return this->uuid;
 }
 
