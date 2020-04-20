@@ -4,19 +4,29 @@
 #include <Servo.h>
 
 // ERROR CODES
-static const int SERVO_IS_NOT_ATTACHED = 1;
+static const uint8_t SERVO_IS_NOT_ATTACHED = 255;
 
 class Servo_motor : Servo {
 private:
-  Servo *servo = nullptr;
-  const int leftmost_pos_deg;
-  const int rightmost_pos_deg;
+  Servo servo;
+  const char *uuid;
+  const uint8_t pin;
+  const uint16_t poll_rate;
+  const uint8_t leftmost_pos_deg;
+  const uint8_t rightmost_pos_deg;
 public:
-  Servo_motor(const int rightmost_position_degree, const int leftmost_position_degree);
-  ~Servo_motor();
-  int rightmost_position();
-  int leftmost_position();
-  int get_position_degree();
+  Servo_motor(const char *uuid, uint8_t pin, uint16_t poll_rate, uint8_t rightmost_position_degree = 0,
+              uint8_t leftmost_position_degree = 180);
+
+  const char *get_uuid();
+
+  uint8_t get_pin();
+
+  uint8_t move_to_rightmost_position();
+
+  uint8_t move_to_leftmost_position();
+
+  uint8_t get_current_position();
 };
 
 
