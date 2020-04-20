@@ -5,25 +5,26 @@
 #include <FW_updater.hpp>
 #include <MQTT_client.hpp>
 #include <MD5.hpp>
+#include <Servo_motor.hpp>
 
 // debug mode, set to 0 if making a release
 #define DEBUG 1
 
 // Logging macro used in debug mode
 #if DEBUG == 1
-  #define LOG(message) Serial.println(message);
+#define LOG(message) Serial.println(message);
 #else
-  #define LOG(message)
+#define LOG(message)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
 /// CONSTANT DEFINITION
 ////////////////////////////////////////////////////////////////////////////////
 
-#define WIFI_SSID    "SSID"
-#define WIFI_PASS    "PASS"
+#define WIFI_SSID    "codefactory"
+#define WIFI_PASS    "rrv2WxFY"
 
-#define MODULE_TYPE  "DUMMY_TYPE"
+#define MODULE_TYPE  "SERVO_MOTOR"
 
 #define LOOP_DELAY_MS   10u
 #define FW_UPDATE_PORT  5000u
@@ -34,23 +35,22 @@
 
 static String module_mac;
 
-static FW_updater  *fw_updater = nullptr;
+static FW_updater *fw_updater = nullptr;
 static MQTT_client *mqtt_client = nullptr;
+static std::vector<Servo_motor> servo_motors;
 
 static bool standby_mode = false;
 
-static void resolve_mqtt(String& topic, String& payload);
+static void resolve_mqtt(String &topic, String &payload);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// SETUP
 ////////////////////////////////////////////////////////////////////////////////
 
-void setup() 
-{
-
-  #if DEBUG == true
-    Serial.begin(115200);
-  #endif
+void setup() {
+#if DEBUG == true
+  Serial.begin(115200);
+#endif
   delay(10);
 
   module_mac = WiFi.macAddress();
@@ -72,7 +72,7 @@ void setup()
   mqtt_client->setup_mqtt(module_mac.c_str(), MODULE_TYPE, resolve_mqtt);
   LOG("Connected to MQTT broker");
   mqtt_client->publish_module_id();
-    LOG("Subscribing to ALL_MODULES ...");
+  LOG("Subscribing to ALL_MODULES ...");
   mqtt_client->subscribe("ALL_MODULES");
   LOG("Subscribing to " + module_mac + "/SET_CONFIG ...");
   mqtt_client->subscribe((module_mac + "/SET_CONFIG").c_str(), 2u);
@@ -88,21 +88,30 @@ void setup()
 /// LOOP
 ////////////////////////////////////////////////////////////////////////////////
 
-void loop() 
-{
-
+void loop() {
   mqtt_client->loop();
 
-  // DynamicJsonDocument json(512);
-  // JsonObject device_1_obj = json.createNestedObject("[DEVICE_ID]");
-  // device_1_obj["datapoint_code_1"] = 22.3;
-  // device_1_obj["datapoint_code_2"] = "string";
-  // device_1_obj["datapoint_code_3"] = true;
-  // JsonObject device_2_obj = json.createNestedObject("[DEVICE_ID]");
-  // device_2_obj["datapoint_code_1"] = 22.3;
-  // device_2_obj["datapoint_code_2"] = "string";
-  // device_2_obj["datapoint_code_3"] = true;
-  // mqtt_client->publish_value_update(json);
+  if (!servo_motors.empty() && !standby_mode) {
+    DynamicJsonDocument json(1024);
+
+    for (Servo_motor &motor : servo_motors) {
+      if (motor.poll()) {
+        char uuid[strlen(motor.get_uuid().c_str())];
+        sprintf(uuid, "%s", motor.get_uuid().c_str());
+        JsonObject motor_data = json.createNestedObject(uuid);
+        motor_data["POSITION"] = motor.get_current_position();
+      }
+    }
+
+    if (!json.isNull()) {
+#if DEBUG == 1
+      String json_log;
+      serializeJson(json, json_log);
+      LOG(json_log);
+#endif
+      mqtt_client->publish_value_update(json);
+    }
+  }
 
   delay(LOOP_DELAY_MS);
 }
@@ -111,106 +120,100 @@ void loop()
 /// MQTT RESOLVER
 ////////////////////////////////////////////////////////////////////////////////
 
-static void resolve_mqtt(String& topic, String& payload) 
-{
+static void resolve_mqtt(String &topic, String &payload) {
 
   LOG("Received message: " + topic + " - " + payload);
 
   DynamicJsonDocument payload_json(256);
   DeserializationError json_err = deserializeJson(payload_json, payload);
 
-  if (json_err) 
-  {
+  if (json_err) {
     LOG("JSON error: " + String(json_err.c_str()));
     return;
   }
 
-  if (topic.equals("ALL_MODULES") || topic.equals(module_mac + "/REQUEST")) 
-  {
-    const char* request = payload_json["request"];
+  if (topic.equals("ALL_MODULES") || topic.equals(module_mac + "/REQUEST")) {
+    const char *request = payload_json["request"];
 
-    if (request != nullptr) 
-    {
-      if (String(request) == "module_discovery") 
+    if (request != nullptr) {
+      if (String(request) == "module_discovery")
         mqtt_client->publish_module_id();
-      else if (String(request) == "stop") 
-      {
+      else if (String(request) == "stop") {
         const uint16_t sequence_number = payload_json["sequence_number"];
 
         LOG("Switching to standby mode");
-        // TODO: CUSTOM STOP ACTION
+        // switch to standby mode
         standby_mode = true;
-        // TODO: mqtt_client->publish_request_result(sequence_number, result, details, QOS = 1);
-      } 
-      else if (String(request) == "start") 
-      {
+        mqtt_client->publish_request_result(sequence_number, true);
+      } else if (String(request) == "start") {
         const uint16_t sequence_number = payload_json["sequence_number"];
 
         LOG("Switching to active mode");
         // switch to active mode
         standby_mode = false;
-        // TODO: mqtt_client->publish_request_result(sequence_number, result, details, QOS = 1);
+        mqtt_client->publish_request_result(sequence_number, true);
       }
     }
-  } 
-  else if (topic.equals(module_mac + "/SET_CONFIG")) 
-  {    
+  } else if (topic.equals(module_mac + "/SET_CONFIG")) {
     JsonObject json_config = payload_json.as<JsonObject>();
-    LOG("Deleting previous configuration");
-    // TODO: DELETE PREVIOUS CONFIGURATION
+    if (!servo_motors.empty()) {
+      LOG("Deleting previous configuration");
+      std::vector<Servo_motor>().swap(servo_motors);
+    }
 
     // create devices according to received configuration
-    for (const JsonPair& pair : json_config) 
-    { 
-      const char* const device_uuid = pair.key().c_str();
+    for (const JsonPair &pair : json_config) {
+      const char *device_uuid = pair.key().c_str();
       const JsonObject device_config = pair.value().as<JsonObject>();
-      // TODO: CUSTOM DEVICE ADDRESS ASSIGNMENT (ACCORDING TO DATATYPE AND RANGE)
-      // E.G: const uint8_t address = device_config["address"];
-
+      // read the the Servo motor signal pin
+      const uint8_t signal_pin = device_config["address"];
       const uint16_t poll_rate = device_config["poll_rate"];
 
       LOG("Creating device with parameters: ");
       LOG(String("\t uuid:\t") + device_uuid);
-      // LOG(String("\t address:\t") + address);
+      LOG(String("\t address:\t") + signal_pin);
       LOG(String("\t interval_rate:\t") + ((poll_rate * 1000) / LOOP_DELAY_MS));
 
-      // TODO: CUSTOM DEVICE CREATION ACTION
+      servo_motors.emplace_back(device_uuid, signal_pin, ((poll_rate * 1000) / LOOP_DELAY_MS));
     }
 
     // calculate config MD5 chuecksum
     std::string payload_cpy(payload.c_str());
-    const std::string& md5_str = MD5::make_digest(MD5::make_hash(&payload_cpy[0]), 16);
+    const std::string &md5_str = MD5::make_digest(MD5::make_hash(&payload_cpy[0]), 16);
 
     LOG(String("Config MD5 checksum: ") + md5_str.c_str());
 
     mqtt_client->publish_config_update(md5_str);
-  } 
-  else if (topic.equals(module_mac + "/SET_VALUE")) 
-  {
-    const char* device_uuid = payload_json["device_uuid"];
-    const char* datapoint = payload_json["datapoint"];
+  } else if (topic.equals(module_mac + "/SET_VALUE")) {
+    const char *device_uuid = payload_json["device_uuid"];
+    const char *datapoint = payload_json["datapoint"];
     const uint16_t sequence_number = payload_json["sequence_number"];
-    // TODO: CUSTOM VALUE ASSIGNMENT (ACCORDING TO DATATYPE AND RANGE)
-    // E.G: const uint8_t value = payload_json["value"];   
+    const uint8_t value = payload_json["value"];
 
     LOG("Setting value:");
     LOG(String("\t device_uuid: ") + device_uuid);
     LOG(String("\t datapoint: ") + datapoint);
-    // LOG(String("\t value: ") + value);
+    LOG(String("\t value: ") + value);
 
-    // TODO: CUSTOM SET_VALUE ACTION
-    // TODO: mqtt_client->publish_request_result(sequence_number, result, details, QOS = 1);
-  } 
-  else if (topic.equals(module_mac + "/UPDATE_FW")) 
-  {
-    const char* version = payload_json["version"];
+    for (Servo_motor &motor: servo_motors) {
+      if (motor.get_uuid() == device_uuid) {
+        int ok = motor.resolve_datapoint(datapoint, value);
+        LOG("resolved")
+        LOG(ok)
+        if (ok != 0) mqtt_client->publish_request_result(sequence_number, false, "unknown datapoint");
+        else mqtt_client->publish_request_result(sequence_number, true);
+      }
+    }
+//    mqtt_client->publish_request_result(sequence_number, false, "no matching device");
+  } else if (topic.equals(module_mac + "/UPDATE_FW")) {
+    const char *version = payload_json["version"];
     const uint16_t sequence_number = payload_json["sequence_number"];
 
     LOG(String("Updating firmware to version: ") + version);
     bool result = fw_updater->update(version);
     String log_msg = result ? "\t result: ok" : "\t result: error";
     LOG(log_msg);
-    
+
     mqtt_client->publish_request_result(sequence_number, result);
   }
 }
