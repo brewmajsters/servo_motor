@@ -36,3 +36,18 @@ bool Servo_motor::poll() {
   this->wait = this->poll_rate;
   return true;
 }
+
+int Servo_motor::go_to(uint8_t angle) {
+  if (not this->attached()) return PIN_NOT_ATTACHED;
+
+  this->write(angle);
+  return 0;
+}
+
+int Servo_motor::resolve_datapoint(const std::string& datapoint, const uint32_t value) {
+  if (datapoint == "ANGLE") {
+    return this->go_to(value);
+  } else {
+    return 1;
+  }
+}
