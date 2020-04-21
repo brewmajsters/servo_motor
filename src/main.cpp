@@ -99,7 +99,7 @@ void loop() {
         char uuid[strlen(motor.get_uuid().c_str())];
         sprintf(uuid, "%s", motor.get_uuid().c_str());
         JsonObject motor_data = json.createNestedObject(uuid);
-        motor_data["POSITION"] = motor.get_current_position();
+        motor_data["ANGLE"] = motor.get_current_position();
       }
     }
 
