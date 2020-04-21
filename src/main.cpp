@@ -21,10 +21,10 @@
 /// CONSTANT DEFINITION
 ////////////////////////////////////////////////////////////////////////////////
 
-#define WIFI_SSID    "codefactory"
-#define WIFI_PASS    "rrv2WxFY"
+#define WIFI_SSID    "SSID"
+#define WIFI_PASS    "PASS"
 
-#define MODULE_TYPE  "SERVO_MOTOR"
+#define MODULE_TYPE  "S05NF_STD"
 
 #define LOOP_DELAY_MS   10u
 #define FW_UPDATE_PORT  5000u
@@ -198,8 +198,6 @@ static void resolve_mqtt(String &topic, String &payload) {
     for (Servo_motor &motor: servo_motors) {
       if (motor.get_uuid() == device_uuid) {
         int ok = motor.resolve_datapoint(datapoint, value);
-        LOG("resolved")
-        LOG(ok)
         if (ok != 0) mqtt_client->publish_request_result(sequence_number, false, "unknown datapoint");
         else mqtt_client->publish_request_result(sequence_number, true);
       }
