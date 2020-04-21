@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.1] - 2020-04-01
+## [0.0.1] - 2020-21-01
 ### Added
 - Servo motor wrapper library
     - initialization
@@ -15,5 +15,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - scream the current position
 - implement all required APIs
 
-[Unreleased]: https://github.com/brewmajsters/ansible-skeleton/compare/1.0.0...develop
-[0.0.1]: https://github.com/brewmajsters/ansible-skeleton/compare/0.0.1...1.0.0
+[Unreleased]: https://github.com/brewmajsters/servo_motor/compare/0.0.1...develop
+[0.0.1]: https://github.com/brewmajsters/servo_motor/releases/tag/0.0.1
