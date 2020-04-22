@@ -1,30 +1,36 @@
-#ifndef MQTT_CLIENT_HPP
-#define MQTT_CLIENT_HPP
+#pragma once
 
 #include <WiFi.h>
 #include <MQTT.h>
+#include <string>
 #include <ArduinoJson.h>
 
-class MQTT_client{
-  public:
-    MQTT_client(const char gw_ip[], const uint32_t port = 1883, const uint16_t buffer_size = 256);
+#define ARDUINOJSON_ENABLE_STD_STRING 1
 
-    void set_mqtt_params(const char module_id[], const char module_type[], MQTTClientCallbackSimple callback);
-    void connect();
-    bool subscribe(const char topic[], const uint8_t QOS = 2);
-    bool publish(const char topic[], const char payload[], const uint8_t QOS = 2);
+class MQTT_client : public MQTTClient 
+{
+  public:
+    MQTT_client(const char* gw_ip, const uint32_t port = 1883, const uint16_t buffer_size = 256);
+
+    void setup_mqtt(
+      const std::string& module_mac, 
+      const std::string& module_type, 
+      MQTTClientCallbackSimple callback
+    );
     bool publish_module_id(const uint8_t QOS = 2);
-    bool publish_config_update(const char config_hash[], const uint8_t QOS = 2);
+    bool publish_config_update(const std::string& config_hash, const uint8_t QOS = 2);
     bool publish_value_update(DynamicJsonDocument values_json, const uint8_t QOS = 0);
-    bool mqtt_loop();
+    bool publish_request_result(
+      const uint16_t sequence_number, 
+      const bool result, 
+      const std::string& details = "",
+      const uint8_t QOS = 1
+    );
 
     ~MQTT_client();
 
   private:
-    char* module_id = nullptr;
-    char* module_type = nullptr;
+    std::string module_mac;
+    std::string module_type;
     WiFiClient wifi_client;
-    MQTTClient* mqtt_client = nullptr;
 };
-
-#endif
