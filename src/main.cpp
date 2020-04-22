@@ -5,7 +5,7 @@
 #include <FW_updater.hpp>
 #include <MQTT_client.hpp>
 #include <MD5.hpp>
-#include <Servo_motor.hpp>
+#include "Servo_motor.hpp"
 
 // debug mode, set to 0 if making a release
 #define DEBUG 1
@@ -96,9 +96,7 @@ void loop() {
 
     for (Servo_motor &motor : servo_motors) {
       if (motor.poll()) {
-        char uuid[strlen(motor.get_uuid().c_str())];
-        sprintf(uuid, "%s", motor.get_uuid().c_str());
-        JsonObject motor_data = json.createNestedObject(uuid);
+        JsonObject motor_data = json.createNestedObject(motor.get_uuid().c_str());
         motor_data["ANGLE"] = motor.get_current_position();
       }
     }
@@ -198,7 +196,8 @@ static void resolve_mqtt(String &topic, String &payload) {
     for (Servo_motor &motor: servo_motors) {
       if (motor.get_uuid() == device_uuid) {
         int ok = motor.resolve_datapoint(datapoint, value);
-        if (ok != 0) mqtt_client->publish_request_result(sequence_number, false, "unknown datapoint");
+        if (ok == Servo_motor::UKNOWN_DATAPOINT)
+          mqtt_client->publish_request_result(sequence_number, false, "unknown datapoint");
         else mqtt_client->publish_request_result(sequence_number, true);
       }
     }
