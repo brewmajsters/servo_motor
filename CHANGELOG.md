@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.1] - 2020-21-01
+## [0.2.0] - 2020-04-28
+### Added
+- mqtt and wifi reconnect in case of disconnect
+
+## [0.1.0] - 2020-04-21
 ### Added
 - Servo motor wrapper library
     - initialization
@@ -15,5 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - scream the current position
 - implement all required APIs
 
-[Unreleased]: https://github.com/brewmajsters/servo_motor/compare/0.0.1...develop
+[Unreleased]: https://github.com/brewmajsters/servo_motor/compare/0.2.0...develop
+[0.2.0]: https://github.com/brewmajsters/servo_motor/compare/0.1.0...0.2.0
+[0.1.0]: https://github.com/brewmajsters/servo_motor/compare/0.0.1...0.1.0
 [0.0.1]: https://github.com/brewmajsters/servo_motor/releases/tag/0.0.1
