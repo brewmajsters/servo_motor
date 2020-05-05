@@ -108,7 +108,7 @@ void loop() {
 
     for (Servo_motor &motor : servo_motors) {
       if (motor.poll()) {
-        JsonObject motor_data = json.createNestedObject(motor.get_uuid().c_str());
+        JsonObject motor_data = json.createNestedObject(motor.uuid.c_str());
         motor_data["ANGLE"] = motor.get_current_position();
       }
     }
@@ -206,7 +206,7 @@ static void resolve_mqtt(String &topic, String &payload) {
     LOG(String("\t value: ") + value);
 
     for (Servo_motor &motor: servo_motors) {
-      if (motor.get_uuid() == device_uuid) {
+      if (motor.uuid == device_uuid) {
         int ok = motor.resolve_datapoint(datapoint, value);
         if (ok == Servo_motor::UKNOWN_DATAPOINT)
           mqtt_client->publish_request_result(sequence_number, false, "unknown datapoint");

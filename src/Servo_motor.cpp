@@ -9,13 +9,9 @@ Servo_motor::Servo_motor(const std::string uuid,
       uuid(uuid),
       poll_rate(poll_rate),
       leftmost_pos_deg(leftmost_position_degree),
-      rightmost_pos_deg(rightmost_position_degree),
-      wait(poll_rate) {
+      rightmost_pos_deg(rightmost_position_degree) {
   this->attach(pin);
-}
-
-std::string Servo_motor::get_uuid() {
-  return this->uuid;
+  this->wait = poll_rate;
 }
 
 uint8_t Servo_motor::move_to_leftmost_position() {
@@ -36,7 +32,6 @@ uint8_t Servo_motor::get_current_position() {
   if (not this->attached()) return NOT_ATTACHED;
 
   return this->read();
-  return 0;
 }
 
 bool Servo_motor::poll() {

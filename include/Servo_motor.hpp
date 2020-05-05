@@ -4,12 +4,12 @@
 
 class Servo_motor : Servo {
 private:
+  uint16_t wait;
+public:
   const std::string uuid;
   const uint16_t poll_rate;
   const uint8_t leftmost_pos_deg;
   const uint8_t rightmost_pos_deg;
-  uint16_t wait;
-public:
   static const uint8_t NOT_ATTACHED = 255;
   static const uint8_t UKNOWN_DATAPOINT = 254;
 
@@ -18,8 +18,6 @@ public:
               uint16_t poll_rate,
               uint8_t leftmost_pos = 0,
               uint8_t rightmost_pos = 180);
-
-  std::string get_uuid();
 
   uint8_t move_to_rightmost_position();
 
