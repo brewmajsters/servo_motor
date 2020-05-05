@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2020-05-05
+### Fixed
+- made all Servo_motor object variables public
+
 ## [0.2.0] - 2020-04-28
 ### Added
 - mqtt and wifi reconnect in case of disconnect
@@ -19,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - scream the current position
 - implement all required APIs
 
-[Unreleased]: https://github.com/brewmajsters/servo_motor/compare/0.2.0...develop
+[Unreleased]: https://github.com/brewmajsters/servo_motor/compare/0.2.1...develop
+[0.2.1]: https://github.com/brewmajsters/servo_motor/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/brewmajsters/servo_motor/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/brewmajsters/servo_motor/compare/0.0.1...0.1.0
 [0.0.1]: https://github.com/brewmajsters/servo_motor/releases/tag/0.0.1
